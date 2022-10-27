@@ -40,6 +40,6 @@ do
 	if [ "$(proxmox-backup-client list | grep -vE "($(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)" | grep -E '(ct|vm)/' | wc -l)" -gt "0" ]
 	then
     		send_email "${datastore}" "${check}"
-		telegramm "$(hostname -f) - $datastore<code>$(proxmox-backup-client list | grep -vE "($(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)")</code>"
+		telegramm "$(hostname -f) - $datastore<code>${check}</code>"
 	fi
 done < <(proxmox-backup-manager datastore list --output-format json-pretty | grep '    "name": ' | cut -d '"' -f4)
