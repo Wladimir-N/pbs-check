@@ -39,8 +39,7 @@ do
 	export check="$(proxmox-backup-client list | grep -vE "($(echo ${DatastoreTypeVMID} | tr '/' '\n' | grep "${datastore}-" | cut -d '-' -f2,3 | tr '-' '/' | tr '\n' '|')$(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)")"
 	if [ "$(proxmox-backup-client list | grep -vE "($(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)" | grep -E '(ct|vm)/' | wc -l)" -gt "0" ]
 	then
-    send_email "${datastore}" "${check}"
-		echo "${check}" | mail -s "no backup - $(hostname -f) - $datastore" info@settin.ru
+    		send_email "${datastore}" "${check}"
 		telegramm "$(hostname -f) - $datastore<code>$(proxmox-backup-client list | grep -vE "($(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)")</code>"
 	fi
 done < <(proxmox-backup-manager datastore list --output-format json-pretty | grep '    "name": ' | cut -d '"' -f4)
