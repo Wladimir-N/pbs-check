@@ -17,7 +17,7 @@ send_email () {
 	fi
 	if [ ! -z ${email_html} ]
 	then
-		echo "<code>$2</code>" | mail -s "$no backup - (echo -e "$(hostname -f) - $1\nContent-Type: text/html")" ${email_html}
+		echo "<code>$2</code>" | mail -s "$no backup - $(echo -e "$(hostname -f) - $1\nContent-Type: text/html")" ${email_html}
 	fi
 }
 while read datastore
