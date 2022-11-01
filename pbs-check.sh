@@ -1,13 +1,5 @@
 #!/bin/bash
-# пароль от root
-export PBS_PASSWORD='Rm6wTrdNWDDpec~6'
-
-# исключить из проверки бекапы перечисленных виртуалок и контейнеров в соответствующих DataStore
-export DatastoreTypeVMID=DATASTORE-ct-VMID/DATASTORE-vm-VMID
-
-# Настройки доставки в телеграм чат
-export chat_id=-441147659
-export token=2311215865:BBDf-SadX4T6rlXTbu3ljdcBugVBqVIlv1ff
+source $(dirname "$(realpath $0)")/.env
 telegramm () {
 	test=
 	while [ "$(echo $test | cut -d '"' -f 2)" != "ok" ]; do
@@ -15,13 +7,6 @@ telegramm () {
 		sleep 1
 	done
 }
-
-# Настройки отправки на email
-# требуется установка пакета mailutils
-# почтовый ящики на который присылать оповещения, если не нужен, закоментируйте
-export email=info@settin.ru
-# почтовый ящик на который присылать оповещения в html если у Вас в обычном формате всё съезжает, если не нужен, закоментируйте
-export email_html=info@settin.ru
 send_email () {
   if [ ! -z ${email} ]
   then
@@ -32,7 +17,6 @@ send_email () {
     echo "<code>$2</code>" | mail -s "$no backup - (echo -e "$(hostname -f) - $1\nContent-Type: text/html")" ${email_html}
   fi
 }
-
 while read datastore
 do
 	export PBS_REPOSITORY=${datastore}
