@@ -9,7 +9,7 @@
 
 Для работы отправки почты нужно установить mailutils
 
-<code>apt install --no-install-recommends git</code>
+<code>apt install --no-install-recommends git mailutils curl</code>
 
 <code>git clone https://github.com/Wladimir-N/pbs-check.git</code>
 
