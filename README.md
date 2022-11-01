@@ -8,3 +8,13 @@
 Коментарии по тому как заполнять эти переменные и примеры заполнения даны в самом .env.example
 
 Для работы отправки почты нужно установить mailutils
+
+<code>apt install --no-install-recommends git</code>
+
+<code>git clone https://github.com/Wladimir-N/pbs-check.git</code>
+
+<code>ln -s $(pwd)/pbs-check/pbs-check.sh /usr/local/bin</code>
+
+<code>cp pbs-check/.env.example pbs-check/.env</code>
+
+<code>nano pbs-check/.env</code>
