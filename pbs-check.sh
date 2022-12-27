@@ -33,7 +33,7 @@ do
 		fi
 	done < <(proxmox-backup-client namespace list)
 	export check="$(proxmox-backup-client list | grep -vE "($(echo ${DatastoreTypeVMID} | tr '/' '\n' | grep "${datastore}-" | cut -d '-' -f2,3 | tr '-' '/' | tr '\n' '|')$(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)")"
-	if [ "$(proxmox-backup-client list | grep -vE "($(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)" | grep -E '(ct|vm)/' | wc -l)" -gt "0" ]
+	if [ "$(proxmox-backup-client list | grep -vE "($(echo ${DatastoreTypeVMID} | tr '/' '\n' | grep "${datastore}-" | cut -d '-' -f2,3 | tr '-' '/' | tr '\n' '|')$(date +"/%Y-%m-%dT")|$(date -d "1 day ago"  +"/%Y-%m-%dT")|├)" | grep -E '(ct|vm)/' | wc -l)" -gt "0" ]
 	then
     		send_email "${datastore}" "${check}"
 		telegramm "$(hostname -f) - $datastore<code>${check}</code>"
