@@ -1,9 +1,16 @@
 import json
 import subprocess
 from datetime import datetime, timedelta
+
 # apt install --no-install-recommends python3-dotenv
 from dotenv import load_dotenv
+
 import os
+import smtplib
+from email.mime.text import MIMEText
+
+#apt install --no-install-recommends python3-python-telegram-bot
+import telegram
 
 # Загрузка переменных из файла .env
 load_dotenv()
@@ -30,6 +37,23 @@ if skipped_backups:
         skipped_backups_dict[backup_id] = {"type": backup_type, "datastore": backup_datastore, "namespace": backup_namespace}
 else:
     skipped_backups_dict = {}
+
+# Настройки электронной почты
+smtp_server = os.getenv('SMTP_SERVER')
+smtp_port = int(os.getenv('SMTP_PORT'))
+smtp_username = os.getenv('SMTP_USERNAME')
+smtp_password = os.getenv('SMTP_PASSWORD')
+from_email = os.getenv('FROM_EMAIL')
+to_email = os.getenv('TO_EMAIL')
+if to_email:
+    to_email = to_email.split(',')  # список адресов через запятую
+
+# Настройки телеграма
+telegram_token = os.getenv('TELEGRAM_TOKEN')
+telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
+
+# Список машин без бэкапов
+machines_message = ""
 
 # Выполнение команды и получение списка имен datastore'ов
 output = subprocess.check_output("proxmox-backup-manager datastore list --output-format json", shell=True)
@@ -61,7 +85,7 @@ for pbs_repository in pbs_repositories:
             # Проверка каждого бэкапа
             for backup in backups:
                 # Если backup-id есть в списке пропущенных бэкапов и backup-type совпадает, то пропускаем его
-                if backup["backup-id"] in skipped_backups_dict and skipped_backups_dict[backup["backup-id"]]["type"] == backup["backup-type"] and skipped_backups_dict[backup["backup-id"]]["datastore"] == datastore and (not skipped_backups_dict[backup["backup-id"]]["namespace"] or skipped_backups_dict[backup["backup-id"]]["namespace"] == namespace):
+                if backup["backup-id"] in skipped_backups_dict and skipped_backups_dict[backup["backup-id"]]["type"] == backup["backup-type"] and (skipped_backups_dict[backup["backup-id"]]["datastore"] == datastore or skipped_backups_dict[backup["backup-id"]]["datastore"] == "*") and (not skipped_backups_dict[backup["backup-id"]]["namespace"] or skipped_backups_dict[backup["backup-id"]]["namespace"] == namespace):
                     continue
                 # Преобразование времени последнего бэкапа в формат datetime
                 last_backup_time = datetime.fromtimestamp(backup["last-backup"])
@@ -73,9 +97,34 @@ for pbs_repository in pbs_repositories:
 
             # Вывод списка машин без бэкапов
             if machines_without_backups:
-                print(f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):")
                 for machine in machines_without_backups:
-                    print(machine)
+                    machines_message += f"{machine}\n"
+                if machines_message:
+                    message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):\n{machines_message.strip()}"
+                    print(message)
+
+                    # Отправка сообщения на электронную почту
+                    if smtp_server and from_email and to_email:
+                        msg = MIMEText(message)
+                        msg['Subject'] = "Список машин без бэкапов"
+                        msg['From'] = from_email
+                        msg['To'] = ', '.join(to_email)  # объединяем список адресов через запятую
+                        if smtp_port == 25:
+                            server = smtplib.SMTP(smtp_server, smtp_port)
+                        else:
+                            server = smtplib.SMTP(smtp_server, smtp_port)
+                            server.starttls()
+                        if smtp_username and smtp_password:
+                            server.login(smtp_username, smtp_password)
+                        server.sendmail(from_email, to_email, msg.as_string())
+                        server.quit()
+                        print("Сообщение отправлено на электронную почту")
+
+                    # Отправка сообщения в телеграм
+                    if telegram_token and telegram_chat_id:
+                        bot = telegram.Bot(token=telegram_token)
+                        bot.send_message(chat_id=telegram_chat_id, text=message)
+                        print("Сообщение отправлено в телеграм")
             else:
                 print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}, {namespace}).")
     # Если в репозитории нет namespace'ов, то проверяем все бэкапы
@@ -92,7 +141,7 @@ for pbs_repository in pbs_repositories:
         # Проверка каждого бэкапа
         for backup in backups:
             # Если backup-id есть в списке пропущенных бэкапов и backup-type совпадает, то пропускаем его
-            if backup["backup-id"] in skipped_backups_dict and skipped_backups_dict[backup["backup-id"]]["type"] == backup["backup-type"] and skipped_backups_dict[backup["backup-id"]]["datastore"] == datastore and (not skipped_backups_dict[backup["backup-id"]]["namespace"] or skipped_backups_dict[backup["backup-id"]]["namespace"] == namespace):
+            if backup["backup-id"] in skipped_backups_dict and skipped_backups_dict[backup["backup-id"]]["type"] == backup["backup-type"] and (skipped_backups_dict[backup["backup-id"]]["datastore"] == datastore or skipped_backups_dict[backup["backup-id"]]["datastore"] == "*") and (not skipped_backups_dict[backup["backup-id"]]["namespace"] or skipped_backups_dict[backup["backup-id"]]["namespace"] == namespace):
                 continue
             # Преобразование времени последнего бэкапа в формат datetime
             last_backup_time = datetime.fromtimestamp(backup["last-backup"])
@@ -106,6 +155,32 @@ for pbs_repository in pbs_repositories:
         if machines_without_backups:
             print(f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):")
             for machine in machines_without_backups:
-                print(machine)
+                machines_message += f"{machine}\n"
+            if machines_message:
+                message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):\n{machines_message.strip()}"
+                print(message)
+
+                # Отправка сообщения на электронную почту
+                if smtp_server and from_email and to_email:
+                    msg = MIMEText(message)
+                    msg['Subject'] = "Список машин без бэкапов"
+                    msg['From'] = from_email
+                    msg['To'] = ', '.join(to_email)  # объединяем список адресов через запятую
+                    if smtp_port == 25:
+                        server = smtplib.SMTP(smtp_server, smtp_port)
+                    else:
+                        server = smtplib.SMTP(smtp_server, smtp_port)
+                        server.starttls()
+                    if smtp_username and smtp_password:
+                        server.login(smtp_username, smtp_password)
+                    server.sendmail(from_email, to_email, msg.as_string())
+                    server.quit()
+                    print("Сообщение отправлено на электронную почту")
+
+                # Отправка сообщения в телеграм
+                if telegram_token and telegram_chat_id:
+                    bot = telegram.Bot(token=telegram_token)
+                    bot.send_message(chat_id=telegram_chat_id, text=message)
+                    print("Сообщение отправлено в телеграм")
         else:
             print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}).")
