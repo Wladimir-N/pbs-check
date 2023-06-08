@@ -12,6 +12,9 @@ from email.mime.text import MIMEText
 #apt install --no-install-recommends python3-python-telegram-bot
 import telegram
 
+# Установка переменной среды PATH
+os.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
 # Загрузка переменных из файла .env
 load_dotenv()
 
