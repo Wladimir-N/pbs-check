@@ -10,3 +10,11 @@
 <code>apt install --no-install-recommends python3-dotenv git python3-python-telegram-bot</code>
 
 <code>git clone https://github.com/Wladimir-N/pbs-check.git -b python3</code>
+
+<code>cd pbs-check</code>
+
+<code>cp .env.example .env</code>
+
+<code>nano .env</code>
+
+<code>python3 pbs-check.py</code>
