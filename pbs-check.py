@@ -153,7 +153,6 @@ for pbs_repository in pbs_repositories:
 
         # Вывод списка машин без бэкапов
         if machines_without_backups:
-            print(f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):")
             for machine in machines_without_backups:
                 machines_message += f"{machine}\n"
             if machines_message:
