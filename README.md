@@ -5,8 +5,8 @@
 
 Коментарии по тому как заполнять эти переменные и примеры заполнения даны в самом .env.example
 
-Для работы скрипта нужен дополнительный пакет
+Для работы скрипта нужены дополнительный пакеты, python3-python-telegram-bot устанавливаете если вам нужна отправка уведомлений в телеграм
 
-<code>apt install --no-install-recommends python3-dotenv git</code>
+<code>apt install --no-install-recommends python3-dotenv git python3-python-telegram-bot</code>
 
 <code>git clone https://github.com/Wladimir-N/pbs-check.git -b python3</code>
