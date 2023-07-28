@@ -94,9 +94,11 @@ for pbs_repository in pbs_repositories:
                 last_backup_time = datetime.fromtimestamp(backup["last-backup"])
                 # Вычисление разницы между текущим временем и временем последнего бэкапа
                 delta = datetime.now() - last_backup_time
+                # Получение количества дней без бэкапа
+                days_without_backup = delta.days
                 # Если разница больше N дней и у машины нет комментария, то добавляем её в список
                 if delta >= timedelta(days=N) and not backup.get("comment"):
-                    machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"])
+                    machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"] + " - " + str(days_without_backup) + "days")
 
             # Вывод списка машин без бэкапов
             if machines_without_backups:
@@ -150,9 +152,11 @@ for pbs_repository in pbs_repositories:
             last_backup_time = datetime.fromtimestamp(backup["last-backup"])
             # Вычисление разницы между текущим временем и временем последнего бэкапа
             delta = datetime.now() - last_backup_time
+            # Получение количества дней без бэкапа
+            days_without_backup = delta.days
             # Если разница больше N дней и у машины нет комментария, то добавляем её в список
             if delta >= timedelta(days=N) and not backup.get("comment"):
-                machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"])
+                machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"] + " - " + str(days_without_backup) + "days")
 
         # Вывод списка машин без бэкапов
         if machines_without_backups:
