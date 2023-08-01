@@ -134,7 +134,7 @@ for pbs_repository in pbs_repositories:
                         bot.send_message(chat_id=telegram_chat_id, text=message)
                         print("Сообщение отправлено в телеграм")
             else:
-                print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}, {namespace}).")
+                print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}, {namespace}). Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
     # Если в репозитории нет namespace'ов, то проверяем все бэкапы
     else:
         # Загрузка списка бэкапов из команды "proxmox-backup-client list"
