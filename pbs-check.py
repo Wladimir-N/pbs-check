@@ -18,6 +18,9 @@ os.environ['PATH'] = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/b
 # Загрузка переменных из файла .env
 load_dotenv()
 
+# Установка значения переменной ignore_backup_days по умолчанию (90 дней)
+ignore_backup_days = int(os.getenv('ignore_backup_days', 90))
+
 # Получение значения переменной N из файла .env
 N = int(os.environ.get("DAYS"))
 
@@ -97,7 +100,7 @@ for pbs_repository in pbs_repositories:
                 # Получение количества дней без бэкапа
                 days_without_backup = delta.days
                 # Если разница больше N дней и у машины нет комментария, то добавляем её в список
-                if delta >= timedelta(days=N) and not backup.get("comment"):
+                if delta <= timedelta(days=ignore_backup_days) and delta >= timedelta(days=N) and not backup.get("comment"):
                     machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"] + " - " + str(days_without_backup) + "days")
 
             # Вывод списка машин без бэкапов
@@ -155,7 +158,7 @@ for pbs_repository in pbs_repositories:
             # Получение количества дней без бэкапа
             days_without_backup = delta.days
             # Если разница больше N дней и у машины нет комментария, то добавляем её в список
-            if delta >= timedelta(days=N) and not backup.get("comment"):
+            if delta <= timedelta(days=ignore_backup_days) and delta >= timedelta(days=N) and not backup.get("comment"):
                 machines_without_backups.append(backup["backup-type"] + " " + backup["backup-id"] + " - " + str(days_without_backup) + "days")
 
         # Вывод списка машин без бэкапов
