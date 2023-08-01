@@ -108,7 +108,7 @@ for pbs_repository in pbs_repositories:
                 for machine in machines_without_backups:
                     machines_message += f"{machine}\n"
                 if machines_message:
-                    message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):\n{machines_message.strip()}"
+                    message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
                     print(message)
 
                     # Отправка сообщения на электронную почту
@@ -166,7 +166,7 @@ for pbs_repository in pbs_repositories:
             for machine in machines_without_backups:
                 machines_message += f"{machine}\n"
             if machines_message:
-                message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):\n{machines_message.strip()}"
+                message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
                 print(message)
 
                 # Отправка сообщения на электронную почту
@@ -192,4 +192,4 @@ for pbs_repository in pbs_repositories:
                     bot.send_message(chat_id=telegram_chat_id, text=message)
                     print("Сообщение отправлено в телеграм")
         else:
-            print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}).")
+            print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}). Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
