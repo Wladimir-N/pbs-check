@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='telegram.utils.request')
+
 import json
 import subprocess
 from datetime import datetime, timedelta
