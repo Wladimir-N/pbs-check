@@ -187,8 +187,13 @@ if final_notification_message:
 
     # Отправка сообщения в телеграм
     if telegram_token and telegram_chat_id:
-        bot = telegram.Bot(token=telegram_token)
-        bot.send_message(chat_id=telegram_chat_id, text=final_notification_message)
-        print("Сообщение отправлено в телеграм")
+    bot = telegram.Bot(token=telegram_token)
+    max_length = 4096
+    # Разбиваем итоговое сообщение на части, если оно длиннее max_length
+    for i in range(0, len(final_notification_message), max_length):
+        part = final_notification_message[i:i+max_length]
+        bot.send_message(chat_id=telegram_chat_id, text=part)
+    print("Сообщение отправлено в телеграм")
+
 else:
     print(f"Все машины имеют бэкапы за последние {N} дней. Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
