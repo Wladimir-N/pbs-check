@@ -64,6 +64,9 @@ telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
 # Список машин без бэкапов
 machines_message = ""
 
+# Новый аккумулятор для окончательного сообщения уведомления
+final_notification_message = ""
+
 # Выполнение команды и получение списка имен datastore'ов
 output = subprocess.check_output("proxmox-backup-manager datastore list --output-format json", shell=True)
 datastores = json.loads(output)
@@ -82,6 +85,8 @@ for pbs_repository in pbs_repositories:
     # Если в репозитории есть namespace'ы, то проверяем каждый из них
     if namespaces:
         for namespace in namespaces:
+            # Обнуляем переменную machines_message для каждого namespace
+            machines_message = ""
             # Загрузка списка бэкапов из команды "proxmox-backup-client list"
             raw_backups = os.popen(f"proxmox-backup-client list --repository {pbs_repository} --ns {namespace} --output-format json").read().strip()
 
@@ -114,32 +119,15 @@ for pbs_repository in pbs_repositories:
                     message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
                     print(message)
 
-                    # Отправка сообщения на электронную почту
-                    if smtp_server and from_email and to_email:
-                        msg = MIMEText(message)
-                        msg['Subject'] = "Список машин без бэкапов"
-                        msg['From'] = from_email
-                        msg['To'] = ', '.join(to_email)  # объединяем список адресов через запятую
-                        if smtp_port == 25:
-                            server = smtplib.SMTP(smtp_server, smtp_port)
-                        else:
-                            server = smtplib.SMTP(smtp_server, smtp_port)
-                            server.starttls()
-                        if smtp_username and smtp_password:
-                            server.login(smtp_username, smtp_password)
-                        server.sendmail(from_email, to_email, msg.as_string())
-                        server.quit()
-                        print("Сообщение отправлено на электронную почту")
+                    # Вместо отправки уведомления здесь, добавляем сообщение в аккумулятор
+                    final_notification_message += message + "\n\n"
 
-                    # Отправка сообщения в телеграм
-                    if telegram_token and telegram_chat_id:
-                        bot = telegram.Bot(token=telegram_token)
-                        bot.send_message(chat_id=telegram_chat_id, text=message)
-                        print("Сообщение отправлено в телеграм")
             else:
                 print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}, {namespace}). Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
     # Если в репозитории нет namespace'ов, то проверяем все бэкапы
     else:
+        # Обнуляем переменную machines_message для репозитория без namespace
+        machines_message = ""
         # Загрузка списка бэкапов из команды "proxmox-backup-client list"
         raw_backups = os.popen(f"proxmox-backup-client list --repository {pbs_repository} --output-format json").read().strip()
 
@@ -172,27 +160,35 @@ for pbs_repository in pbs_repositories:
                 message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
                 print(message)
 
-                # Отправка сообщения на электронную почту
-                if smtp_server and from_email and to_email:
-                    msg = MIMEText(message)
-                    msg['Subject'] = "Список машин без бэкапов"
-                    msg['From'] = from_email
-                    msg['To'] = ', '.join(to_email)  # объединяем список адресов через запятую
-                    if smtp_port == 25:
-                        server = smtplib.SMTP(smtp_server, smtp_port)
-                    else:
-                        server = smtplib.SMTP(smtp_server, smtp_port)
-                        server.starttls()
-                    if smtp_username and smtp_password:
-                        server.login(smtp_username, smtp_password)
-                    server.sendmail(from_email, to_email, msg.as_string())
-                    server.quit()
-                    print("Сообщение отправлено на электронную почту")
+                # Вместо отправки уведомления здесь, добавляем сообщение в аккумулятор
+                final_notification_message += message + "\n\n"
 
-                # Отправка сообщения в телеграм
-                if telegram_token and telegram_chat_id:
-                    bot = telegram.Bot(token=telegram_token)
-                    bot.send_message(chat_id=telegram_chat_id, text=message)
-                    print("Сообщение отправлено в телеграм")
         else:
             print(f"Все машины имеют бэкапы за последние {N} дней ({pbs_repository}). Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
+
+# После проверки всех репозиториев отправляем накопленное уведомление один раз, если есть проблемные машины
+if final_notification_message:
+    # Отправка сообщения на электронную почту
+    if smtp_server and from_email and to_email:
+        msg = MIMEText(final_notification_message)
+        msg['Subject'] = "Список машин без бэкапов"
+        msg['From'] = from_email
+        msg['To'] = ', '.join(to_email)  # объединяем список адресов через запятую
+        if smtp_port == 25:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+        if smtp_username and smtp_password:
+            server.login(smtp_username, smtp_password)
+        server.sendmail(from_email, to_email, msg.as_string())
+        server.quit()
+        print("Сообщение отправлено на электронную почту")
+
+    # Отправка сообщения в телеграм
+    if telegram_token and telegram_chat_id:
+        bot = telegram.Bot(token=telegram_token)
+        bot.send_message(chat_id=telegram_chat_id, text=final_notification_message)
+        print("Сообщение отправлено в телеграм")
+else:
+    print(f"Все машины имеют бэкапы за последние {N} дней. Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
