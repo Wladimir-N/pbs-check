@@ -116,10 +116,10 @@ for pbs_repository in pbs_repositories:
                 for machine in machines_without_backups:
                     machines_message += f"{machine}\n"
                 if machines_message:
-                    message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}, {namespace}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
+                    message = f"({pbs_repository}, {namespace}):\n{machines_message.strip()}"
                     print(message)
 
-                    # Вместо отправки уведомления здесь, добавляем сообщение в аккумулятор
+																																					  
                     final_notification_message += message + "\n\n"
 
             else:
@@ -128,6 +128,7 @@ for pbs_repository in pbs_repositories:
     else:
         # Обнуляем переменную machines_message для репозитория без namespace
         machines_message = ""
+		
         # Загрузка списка бэкапов из команды "proxmox-backup-client list"
         raw_backups = os.popen(f"proxmox-backup-client list --repository {pbs_repository} --output-format json").read().strip()
 
@@ -157,10 +158,10 @@ for pbs_repository in pbs_repositories:
             for machine in machines_without_backups:
                 machines_message += f"{machine}\n"
             if machines_message:
-                message = f"Список машин без бэкапов за последние {N} дней ({pbs_repository}):\n{machines_message.strip()}.\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
+                message = f"({pbs_repository}):\n{machines_message.strip()}"
                 print(message)
 
-                # Вместо отправки уведомления здесь, добавляем сообщение в аккумулятор
+																											  
                 final_notification_message += message + "\n\n"
 
         else:
@@ -168,6 +169,9 @@ for pbs_repository in pbs_repositories:
 
 # После проверки всех репозиториев отправляем накопленное уведомление один раз, если есть проблемные машины
 if final_notification_message:
+    # Добавляем заголовок и подвал один раз перед отправкой
+    final_notification_message = f"Список машин без бекапов за последние {N} дней:\n\n" + final_notification_message.strip() + f"\nМашины не имеющие бекапы более {ignore_backup_days} дней игнорируются"
+    
     # Отправка сообщения на электронную почту
     if smtp_server and from_email and to_email:
         msg = MIMEText(final_notification_message)
@@ -187,13 +191,13 @@ if final_notification_message:
 
     # Отправка сообщения в телеграм
     if telegram_token and telegram_chat_id:
-    bot = telegram.Bot(token=telegram_token)
-    max_length = 4096
-    # Разбиваем итоговое сообщение на части, если оно длиннее max_length
-    for i in range(0, len(final_notification_message), max_length):
-        part = final_notification_message[i:i+max_length]
-        bot.send_message(chat_id=telegram_chat_id, text=part)
-    print("Сообщение отправлено в телеграм")
+        bot = telegram.Bot(token=telegram_token)
+        max_length = 4096
+        # Разбиваем итоговое сообщение на части, если оно длиннее max_length
+        for i in range(0, len(final_notification_message), max_length):
+            part = final_notification_message[i:i+max_length]
+            bot.send_message(chat_id=telegram_chat_id, text=part)
+        print("Сообщение отправлено в телеграм")
 
 else:
     print(f"Все машины имеют бэкапы за последние {N} дней. Машины не имеющие бекапы более {ignore_backup_days} дней игнорируются")
